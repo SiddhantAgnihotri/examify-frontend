@@ -6,6 +6,9 @@ import { useNavigate } from "react-router-dom";
 const CreateStudent = () => {
   const navigate = useNavigate();
 
+  /* ===============================
+     SINGLE STUDENT STATE
+  ================================ */
   const [form, setForm] = useState({
     name: "",
     email: "",
@@ -15,10 +18,19 @@ const CreateStudent = () => {
 
   const [loading, setLoading] = useState(false);
 
+  /* ===============================
+     BULK UPLOAD STATE
+  ================================ */
+  const [file, setFile] = useState(null);
+  const [bulkLoading, setBulkLoading] = useState(false);
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  /* ===============================
+     CREATE SINGLE STUDENT
+  ================================ */
   const handleCreate = async () => {
     if (!form.name || !form.email || !form.password) {
       alert("Name, email and password are required");
@@ -27,11 +39,9 @@ const CreateStudent = () => {
 
     try {
       setLoading(true);
-
       await API.post("/teacher/create-student", form);
-
       alert("Student created successfully");
-      navigate("/teacher");
+      navigate("/teacher/students");
     } catch (err) {
       alert(err.response?.data?.message || "Failed to create student");
     } finally {
@@ -39,17 +49,71 @@ const CreateStudent = () => {
     }
   };
 
+  /* ===============================
+     BULK UPLOAD STUDENTS
+  ================================ */
+  const handleBulkUpload = async () => {
+    if (!file) {
+      alert("Please select a CSV file");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+      setBulkLoading(true);
+
+      const res = await API.post(
+        "/teacher/bulk-upload-students",
+        formData,
+        {
+          headers: { "Content-Type": "multipart/form-data" }
+        }
+      );
+
+      alert(res.data.message || "Students uploaded successfully");
+      setFile(null);
+    } catch (err) {
+      alert(err.response?.data?.message || "Bulk upload failed");
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  /* ===============================
+     DOWNLOAD CSV TEMPLATE
+  ================================ */
+  const downloadTemplate = () => {
+    const csvContent =
+      "name,email,password,userId\n" +
+      "Rahul Kumar,rahul@gmail.com,123456,STU001\n" +
+      "Anjali Sharma,anjali@gmail.com,123456,STU002\n";
+
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "student_upload_template.csv";
+    a.click();
+
+    window.URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar role="teacher" />
 
-      <div className="max-w-3xl mx-auto bg-white mt-8 p-8 rounded-xl shadow-md">
+      <div className="max-w-4xl mx-auto bg-white mt-8 p-8 rounded-xl shadow-md">
         <h2 className="text-2xl font-bold mb-6">
           Create Student Account
         </h2>
 
+        {/* ===============================
+            SINGLE STUDENT FORM
+        ================================ */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {/* Student Name */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Student Name *
@@ -59,11 +123,10 @@ const CreateStudent = () => {
               value={form.name}
               onChange={handleChange}
               placeholder="Amit Kumar"
-              className="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200"
+              className="w-full border rounded-lg px-3 py-2"
             />
           </div>
 
-          {/* Email */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Email *
@@ -74,11 +137,10 @@ const CreateStudent = () => {
               value={form.email}
               onChange={handleChange}
               placeholder="amit@gmail.com"
-              className="w-full border rounded-lg px-3 py-2 focus:ring focus:ring-blue-200"
+              className="w-full border rounded-lg px-3 py-2"
             />
           </div>
 
-          {/* Password */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Password *
@@ -93,7 +155,6 @@ const CreateStudent = () => {
             />
           </div>
 
-          {/* Student ID */}
           <div>
             <label className="block text-sm font-medium mb-1">
               Student ID (optional)
@@ -108,23 +169,52 @@ const CreateStudent = () => {
           </div>
         </div>
 
-        {/* Actions */}
-        <div className="flex justify-end mt-8 space-x-3">
-          <button
-            onClick={() => navigate("/teacher")}
-            className="px-5 py-2 rounded-lg border hover:bg-gray-100"
-          >
-            Cancel
-          </button>
-
+        <div className="flex justify-end mt-6">
           <button
             onClick={handleCreate}
             disabled={loading}
-            className="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 disabled:opacity-60"
+            className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
           >
             {loading ? "Creating..." : "Create Student"}
           </button>
         </div>
+
+        {/* ===============================
+            BULK UPLOAD SECTION
+        ================================ */}
+        <hr className="my-10" />
+
+        <h3 className="text-xl font-semibold mb-4">
+          Bulk Upload Students
+        </h3>
+
+        <div className="flex flex-col md:flex-row gap-4 items-start">
+          <input
+            type="file"
+            accept=".csv"
+            onChange={(e) => setFile(e.target.files[0])}
+            className="border p-2 rounded-lg w-full md:w-auto"
+          />
+
+          <button
+            onClick={handleBulkUpload}
+            disabled={bulkLoading}
+            className="px-5 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+          >
+            {bulkLoading ? "Uploading..." : "Upload CSV"}
+          </button>
+
+          <button
+            onClick={downloadTemplate}
+            className="px-5 py-2 border rounded-lg hover:bg-gray-100"
+          >
+            Download Template
+          </button>
+        </div>
+
+        <p className="text-sm text-gray-500 mt-3">
+          CSV columns: <b>name, email, password, userId</b>
+        </p>
       </div>
     </div>
   );

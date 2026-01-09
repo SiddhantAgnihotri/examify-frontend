@@ -27,6 +27,8 @@ import StudentDetail from "./pages/teacher/StudentDetail";
 import EditStudent from "./pages/teacher/EditStudent";
 import Results from "./pages/teacher/Results";
 import ExamResults from "./pages/teacher/ExamResults";
+import BulkUploadStudents from "./pages/teacher/BulkUploadStudents";
+
 
 /* ===============================
    STUDENT PAGES
@@ -113,6 +115,16 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/teacher/bulk-upload"
+          element={
+            <ProtectedRoute role="teacher">
+              <BulkUploadStudents />
+            </ProtectedRoute>
+          }
+        />
+
 
         <Route
           path="/teacher/student/:id"
