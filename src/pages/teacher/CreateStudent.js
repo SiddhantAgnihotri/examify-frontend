@@ -104,8 +104,28 @@ const CreateStudent = () => {
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar role="teacher" />
+      <div className="max-w-4xl mx-auto  mt-8 ">
+        <div className="flex items-center justify-between mb-6">
+          <div className="text-sm text-gray-500">
+            <span
+              onClick={() => navigate("/teacher")}
+              className="cursor-pointer hover:text-blue-600"
+            >
+              Dashboard
+            </span>{" "}
+            / <span className="text-gray-700 font-medium">Create-Student</span>
+          </div>
 
+          <button
+            onClick={() => navigate("/teacher")}
+            className="px-4 py-1.5 text-sm rounded-lg border bg-white hover:bg-gray-50"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
+      </div>
       <div className="max-w-4xl mx-auto bg-white mt-8 p-8 rounded-xl shadow-md">
+        
         <h2 className="text-2xl font-bold mb-6">
           Create Student Account
         </h2>

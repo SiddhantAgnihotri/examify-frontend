@@ -43,27 +43,49 @@ const StudentDetail = () => {
       <Navbar role="teacher" />
 
       <div className="max-w-4xl mx-auto p-6">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-6">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-800">
+
+        {/* ================= BREADCRUMB + BACK ================= */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="text-sm text-gray-500">
+            <span
+              onClick={() => navigate("/teacher")}
+              className="cursor-pointer hover:text-blue-600"
+            >
+              Dashboard
+            </span>{" "}
+            /{" "}
+            <span
+              onClick={() => navigate("/teacher/students")}
+              className="cursor-pointer hover:text-blue-600"
+            >
+              Students
+            </span>{" "}
+            /{" "}
+            <span className="text-gray-700 font-medium">
               Student Profile
-            </h2>
-            <p className="text-gray-600 mt-1">
-              View student information and activity
-            </p>
+            </span>
           </div>
 
           <button
             onClick={() => navigate("/teacher/students")}
-            className="px-4 py-2 rounded-lg border hover:bg-gray-100"
+            className="px-4 py-1.5 text-sm rounded-lg border bg-white hover:bg-gray-50"
           >
-            Back
+            ← Back to Students
           </button>
         </div>
 
-        {/* Profile Card */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        {/* ================= HEADER ================= */}
+        <div className="mb-6">
+          <h2 className="text-2xl font-bold text-gray-800">
+            Student Profile
+          </h2>
+          <p className="text-gray-600 mt-1">
+            View student information and activity
+          </p>
+        </div>
+
+        {/* ================= PROFILE CARD ================= */}
+        <div className="bg-white rounded-xl shadow-sm border p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <p className="text-sm text-gray-500">Full Name</p>
@@ -95,9 +117,9 @@ const StudentDetail = () => {
           </div>
         </div>
 
-        {/* Future Sections */}
+        {/* ================= FUTURE EXTENSION ================= */}
         <div className="mt-6 bg-blue-50 border border-blue-100 rounded-xl p-4 text-blue-700 text-sm">
-          🔒 Exam assignments, attempts, and reset actions can be added here.
+          🔒 Exam assignments, attempts, reset access & performance analytics can be added here.
         </div>
       </div>
     </div>

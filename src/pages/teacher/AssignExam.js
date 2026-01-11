@@ -48,7 +48,35 @@ const AssignExam = () => {
       <Navbar role="teacher" />
 
       <div className="max-w-5xl mx-auto p-6">
-        {/* Header */}
+
+        {/* ================= BREADCRUMB + BACK ================= */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="text-sm text-gray-500">
+            <span
+              onClick={() => navigate("/teacher")}
+              className="cursor-pointer hover:text-blue-600"
+            >
+              Dashboard
+            </span>{" "}
+            /{" "}
+            <span
+              onClick={() => navigate("/teacher/my-exams")}
+              className="cursor-pointer hover:text-blue-600"
+            >
+              My Exams
+            </span>{" "}
+            / <span className="text-gray-700 font-medium">Assign Exam</span>
+          </div>
+
+          <button
+            onClick={() => navigate("/teacher/my-exams")}
+            className="px-4 py-1.5 text-sm rounded-lg border bg-white hover:bg-gray-50"
+          >
+            ← Back to My Exams
+          </button>
+        </div>
+
+        {/* ================= HEADER ================= */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800">
             Assign Exam
@@ -58,8 +86,8 @@ const AssignExam = () => {
           </p>
         </div>
 
-        {/* Student List */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
+        {/* ================= STUDENT LIST ================= */}
+        <div className="bg-white rounded-xl shadow-sm border overflow-x-auto">
           {students.length === 0 ? (
             <div className="p-8 text-center text-gray-600">
               No students available
@@ -68,16 +96,16 @@ const AssignExam = () => {
             <table className="min-w-full border-collapse">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-4 py-3 text-center text-sm font-semibold text-gray-700">
+                  <th className="px-4 py-3 text-center text-sm font-semibold">
                     Select
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
                     Name
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
                     Email
                   </th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-700">
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
                     Student ID
                   </th>
                 </tr>
@@ -87,7 +115,7 @@ const AssignExam = () => {
                 {students.map((s) => (
                   <tr
                     key={s._id}
-                    className="border-t hover:bg-gray-50 transition"
+                    className="border-t hover:bg-gray-50"
                   >
                     <td className="px-4 py-3 text-center">
                       <input
@@ -97,9 +125,7 @@ const AssignExam = () => {
                         className="h-4 w-4 accent-blue-600"
                       />
                     </td>
-                    <td className="px-4 py-3 text-gray-800">
-                      {s.name}
-                    </td>
+                    <td className="px-4 py-3">{s.name}</td>
                     <td className="px-4 py-3 text-gray-600">
                       {s.email}
                     </td>
@@ -113,13 +139,11 @@ const AssignExam = () => {
           )}
         </div>
 
-        {/* Footer Actions */}
+        {/* ================= FOOTER ACTIONS ================= */}
         <div className="flex justify-between items-center mt-6">
           <p className="text-sm text-gray-600">
             Selected students:{" "}
-            <span className="font-medium">
-              {selected.length}
-            </span>
+            <span className="font-medium">{selected.length}</span>
           </p>
 
           <div className="space-x-3">

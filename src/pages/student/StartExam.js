@@ -23,18 +23,14 @@ const StartExam = () => {
       try {
         const res = await API.get(`/student/start/${examId}`);
 
-        // Questions
         setQuestions(res.data.questions);
 
-        // 🔄 Restore previous answers
         const restored = {};
         res.data.previousAnswers.forEach(a => {
           restored[a.questionId] = a.selectedOption;
         });
         setAnswers(restored);
 
-        // ⏱ Initialize timer (use exam duration if available)
-        // Example: duration in minutes
         const durationMinutes = res.data.duration || 60;
         setTimeLeft(durationMinutes * 60);
 
@@ -53,7 +49,7 @@ const StartExam = () => {
   }, [examId, navigate]);
 
   /* ===============================
-     TIMER (SAFE & RESUMABLE)
+     TIMER
   ================================ */
   useEffect(() => {
     if (!examStarted.current || timeLeft === null) return;
@@ -71,7 +67,7 @@ const StartExam = () => {
   }, [timeLeft]);
 
   /* ===============================
-     ANSWER HANDLER
+     HANDLERS
   ================================ */
   const handleOptionChange = (qId, option) => {
     setAnswers(prev => ({
@@ -80,9 +76,16 @@ const StartExam = () => {
     }));
   };
 
-  /* ===============================
-     SUBMIT EXAM
-  ================================ */
+  const handleBack = () => {
+    if (
+      window.confirm(
+        "Exam is in progress.\nAre you sure you want to leave?"
+      )
+    ) {
+      navigate("/student");
+    }
+  };
+
   const handleSubmit = async (auto = false) => {
     if (submitting) return;
     if (!auto && !window.confirm("Submit exam now?")) return;
@@ -112,9 +115,6 @@ const StartExam = () => {
     }
   };
 
-  /* ===============================
-     TIME FORMAT
-  ================================ */
   const formatTime = sec => {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
@@ -125,19 +125,31 @@ const StartExam = () => {
     <div className="min-h-screen bg-gray-100">
       <Navbar role="student" />
 
-      {/* Top Bar */}
-      <div className="bg-white shadow sticky top-0 z-10">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between">
-          <p className="font-semibold">
+      {/* ===============================
+          EXAM HEADER (STICKY)
+      ================================ */}
+      <div className="bg-white shadow sticky top-0 z-20">
+        <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+          <button
+            onClick={handleBack}
+            className="px-4 py-2 border rounded-lg hover:bg-gray-100"
+          >
+            ← Back to Exams
+          </button>
+
+          <p className="font-medium">
             Answered: {Object.keys(answers).length}/{questions.length}
           </p>
+
           <p className="font-bold text-red-600">
             ⏱ {timeLeft !== null ? formatTime(timeLeft) : "--:--"}
           </p>
         </div>
       </div>
 
-      {/* Questions */}
+      {/* ===============================
+          QUESTIONS
+      ================================ */}
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {questions.map((q, index) => (
           <div key={q._id} className="bg-white p-6 rounded-xl shadow">

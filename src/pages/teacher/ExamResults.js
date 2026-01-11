@@ -33,9 +33,24 @@ const ExamResults = () => {
       <Navbar role="teacher" />
 
       <div className="max-w-6xl mx-auto p-6">
-        <h2 className="text-2xl font-bold mb-6">
-          Exam Results
-        </h2>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Exam Results
+            </h2>
+            <p className="text-gray-600 mt-1">
+              Student performance overview
+            </p>
+          </div>
+
+          <button
+            onClick={() => window.history.back()}
+            className="px-4 py-2 rounded-lg border hover:bg-gray-100"
+          >
+            ← Back
+          </button>
+        </div>
+
 
         {loading && <p>Loading results...</p>}
 
@@ -96,10 +111,9 @@ const ExamResults = () => {
                       <td className="px-4 py-3">
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-semibold
-                            ${
-                              status === "Pass"
-                                ? "bg-green-100 text-green-700"
-                                : "bg-red-100 text-red-700"
+                            ${status === "Pass"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
                             }`}
                         >
                           {status}

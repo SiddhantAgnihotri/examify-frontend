@@ -24,7 +24,13 @@ const CreateExam = () => {
   };
 
   const handleSubmit = async () => {
-    if (!form.title || !form.instituteName || !form.duration || !form.startTime || !form.endTime) {
+    if (
+      !form.title ||
+      !form.instituteName ||
+      !form.duration ||
+      !form.startTime ||
+      !form.endTime
+    ) {
       alert("Please fill all required fields");
       return;
     }
@@ -46,19 +52,43 @@ const CreateExam = () => {
       <Navbar role="teacher" />
 
       <div className="max-w-4xl mx-auto p-6">
-        {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Create New Exam
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Fill the details below to create an exam. You can add questions later.
-          </p>
+        {/* ===============================
+            HEADER WITH NAVIGATION
+        ================================ */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="text-sm text-gray-500">
+            <span
+              onClick={() => navigate("/teacher")}
+              className="cursor-pointer hover:text-blue-600"
+            >
+              Dashboard
+            </span>{" "}
+            / <span className="text-gray-700 font-medium">Create Exam</span>
+          </div>
+
+          <button
+            onClick={() => navigate("/teacher")}
+            className="px-4 py-1.5 text-sm rounded-lg border bg-white hover:bg-gray-50"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Create New Exam
+            </h2>
+            <p className="text-gray-600 mt-1">
+              Create exam in draft mode. Add questions and publish later.
+            </p>
+          </div>
         </div>
 
-        {/* Form Card */}
+        {/* ===============================
+            FORM CARD
+        ================================ */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-          {/* Section: Basic Info */}
+          {/* Exam Details */}
           <h3 className="text-lg font-semibold text-gray-800 mb-4">
             Exam Details
           </h3>
@@ -120,7 +150,7 @@ const CreateExam = () => {
             </div>
           </div>
 
-          {/* Section: Schedule */}
+          {/* Schedule */}
           <h3 className="text-lg font-semibold text-gray-800 mt-8 mb-4">
             Exam Schedule
           </h3>
@@ -153,7 +183,7 @@ const CreateExam = () => {
             </div>
           </div>
 
-          {/* Section: Marks */}
+          {/* Marks */}
           <h3 className="text-lg font-semibold text-gray-800 mt-8 mb-4">
             Marks & Duration
           </h3>
@@ -191,7 +221,7 @@ const CreateExam = () => {
           {/* Actions */}
           <div className="flex justify-end mt-10 space-x-3">
             <button
-              onClick={() => navigate("/teacher")}
+              onClick={() => navigate("/teacher/my-exams")}
               className="px-5 py-2 rounded-lg border hover:bg-gray-100"
             >
               Cancel

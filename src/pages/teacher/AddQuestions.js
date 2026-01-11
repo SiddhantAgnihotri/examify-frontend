@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import Navbar from "../../components/Navbar";
 
 const AddQuestions = () => {
   const { examId } = useParams();
+  const navigate = useNavigate();
 
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -40,16 +41,13 @@ const AddQuestions = () => {
 
     try {
       setLoading(true);
-
       await API.post(`/question/mcq/${examId}`, form);
-
       setForm({
         questionText: "",
         options: { A: "", B: "", C: "", D: "" },
         correctAnswer: "A",
         marks: 1
       });
-
       fetchQuestions();
     } catch {
       alert("Failed to add question");
@@ -69,7 +67,35 @@ const AddQuestions = () => {
       <Navbar role="teacher" />
 
       <div className="max-w-5xl mx-auto p-6">
-        {/* Header */}
+
+        {/* ================= BREADCRUMB + BACK ================= */}
+        <div className="flex items-center justify-between mb-6">
+          <div className="text-sm text-gray-500">
+            <span
+              onClick={() => navigate("/teacher")}
+              className="cursor-pointer hover:text-blue-600"
+            >
+              Dashboard
+            </span>{" "}
+            /{" "}
+            <span
+              onClick={() => navigate("/teacher/my-exams")}
+              className="cursor-pointer hover:text-blue-600"
+            >
+              My Exams
+            </span>{" "}
+            / <span className="text-gray-700 font-medium">Add Questions</span>
+          </div>
+
+          <button
+            onClick={() => navigate("/teacher/my-exams")}
+            className="px-4 py-1.5 text-sm rounded-lg border bg-white hover:bg-gray-50"
+          >
+            ← Back to My Exams
+          </button>
+        </div>
+
+        {/* ================= HEADER ================= */}
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-800">
             Add MCQ Questions
@@ -79,9 +105,9 @@ const AddQuestions = () => {
           </p>
         </div>
 
-        {/* Add Question */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        {/* ================= ADD QUESTION ================= */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
+          <h3 className="text-lg font-semibold mb-4">
             New Question
           </h3>
 
@@ -91,7 +117,7 @@ const AddQuestions = () => {
             onChange={(e) =>
               setForm({ ...form, questionText: e.target.value })
             }
-            className="w-full border rounded-lg p-3 mb-5 focus:ring-2 focus:ring-blue-200"
+            className="w-full border rounded-lg p-3 mb-5"
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,34 +162,32 @@ const AddQuestions = () => {
             <button
               onClick={addQuestion}
               disabled={loading}
-              className="ml-auto bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-60"
+              className="ml-auto bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700"
             >
               {loading ? "Adding..." : "Add Question"}
             </button>
           </div>
         </div>
 
-        {/* Questions List */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4">
+        {/* ================= QUESTION LIST ================= */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border">
+          <h3 className="text-lg font-semibold mb-4">
             Questions Added ({questions.length})
           </h3>
 
           {questions.length === 0 && (
-            <p className="text-gray-500">
-              No questions added yet.
-            </p>
+            <p className="text-gray-500">No questions added yet.</p>
           )}
 
           <ol className="space-y-4">
             {questions.map((q, index) => (
               <li
                 key={q._id}
-                className="border rounded-lg p-4 hover:bg-gray-50 transition"
+                className="border rounded-lg p-4 hover:bg-gray-50"
               >
-                <div className="flex justify-between items-start gap-4">
+                <div className="flex justify-between gap-4">
                   <div>
-                    <p className="font-medium text-gray-800">
+                    <p className="font-medium">
                       {index + 1}. {q.questionText}
                     </p>
                     <p className="text-sm text-gray-600 mt-1">
@@ -182,6 +206,7 @@ const AddQuestions = () => {
             ))}
           </ol>
         </div>
+
       </div>
     </div>
   );

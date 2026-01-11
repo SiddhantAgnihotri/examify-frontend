@@ -69,14 +69,25 @@ const EditStudent = () => {
 
       <div className="max-w-2xl mx-auto p-6">
         {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Edit Student
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Update student profile information
-          </p>
+        {/* Header */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Edit Student
+            </h2>
+            <p className="text-gray-600 mt-1">
+              Update student profile information
+            </p>
+          </div>
+
+          <button
+            onClick={() => navigate("/teacher/students")}
+            className="px-4 py-2 rounded-lg border hover:bg-gray-100"
+          >
+            ← Students
+          </button>
         </div>
+
 
         {/* Form */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
