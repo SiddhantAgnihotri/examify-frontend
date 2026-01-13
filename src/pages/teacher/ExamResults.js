@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import Navbar from "../../components/Navbar";
 
 const ExamResults = () => {
   const { examId } = useParams();
+  const navigate = useNavigate();
+
   const [results, setResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -13,7 +15,7 @@ const ExamResults = () => {
       try {
         const res = await API.get(`/results/exam/${examId}`);
         setResults(res.data);
-      } catch (err) {
+      } catch {
         alert("Failed to load exam results");
       } finally {
         setLoading(false);
@@ -33,6 +35,7 @@ const ExamResults = () => {
       <Navbar role="teacher" />
 
       <div className="max-w-6xl mx-auto p-6">
+        {/* ================= HEADER ================= */}
         <div className="flex justify-between items-center mb-6">
           <div>
             <h2 className="text-2xl font-bold text-gray-800">
@@ -44,22 +47,26 @@ const ExamResults = () => {
           </div>
 
           <button
-            onClick={() => window.history.back()}
+            onClick={() => navigate(-1)}
             className="px-4 py-2 rounded-lg border hover:bg-gray-100"
           >
             ← Back
           </button>
         </div>
 
+        {/* ================= LOADING ================= */}
+        {loading && (
+          <p className="text-gray-500">Loading results...</p>
+        )}
 
-        {loading && <p>Loading results...</p>}
-
+        {/* ================= EMPTY ================= */}
         {!loading && results.length === 0 && (
           <p className="text-gray-600">No submissions yet.</p>
         )}
 
+        {/* ================= TABLE ================= */}
         {!loading && results.length > 0 && (
-          <div className="overflow-x-auto bg-white rounded-xl shadow">
+          <div className="overflow-x-auto bg-white rounded-xl shadow-sm border">
             <table className="min-w-full border-collapse">
               <thead className="bg-gray-50">
                 <tr>
@@ -78,6 +85,9 @@ const ExamResults = () => {
                   <th className="px-4 py-3 text-left text-sm font-semibold">
                     Status
                   </th>
+                  <th className="px-4 py-3 text-left text-sm font-semibold">
+                    Actions
+                  </th>
                 </tr>
               </thead>
 
@@ -94,30 +104,49 @@ const ExamResults = () => {
                   return (
                     <tr
                       key={r._id}
-                      className="border-t hover:bg-gray-50"
+                      className="border-t hover:bg-gray-50 transition"
                     >
                       <td className="px-4 py-3">
                         {r.studentId.name}
                       </td>
+
                       <td className="px-4 py-3">
                         {r.studentId.email}
                       </td>
+
                       <td className="px-4 py-3 font-medium">
                         {r.obtainedMarks} / {r.totalMarks}
                       </td>
+
                       <td className="px-4 py-3">
                         {percent}%
                       </td>
+
                       <td className="px-4 py-3">
                         <span
                           className={`px-3 py-1 rounded-full text-sm font-semibold
-                            ${status === "Pass"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
+                            ${
+                              status === "Pass"
+                                ? "bg-green-100 text-green-700"
+                                : "bg-red-100 text-red-700"
                             }`}
                         >
                           {status}
                         </span>
+                      </td>
+
+                      {/* 🔥 VIEW ANSWERS */}
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() =>
+                            navigate(
+                              `/teacher/submission/${r._id}`
+                            )
+                          }
+                          className="px-3 py-1.5 text-sm rounded-lg bg-blue-600 text-white hover:bg-blue-700"
+                        >
+                          View Answers
+                        </button>
                       </td>
                     </tr>
                   );

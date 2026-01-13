@@ -28,7 +28,7 @@ import EditStudent from "./pages/teacher/EditStudent";
 import Results from "./pages/teacher/Results";
 import ExamResults from "./pages/teacher/ExamResults";
 import BulkUploadStudents from "./pages/teacher/BulkUploadStudents";
-
+import TeacherSubmissionView from "./pages/teacher/TeacherSubmissionView";
 
 /* ===============================
    STUDENT PAGES
@@ -37,6 +37,7 @@ import StudentDashboard from "./pages/student/StudentDashboard";
 import StartExam from "./pages/student/StartExam";
 import MyResults from "./pages/student/MyResults";
 import Profile from "./pages/student/Profile";
+import StudentExamSummary from "./pages/student/StudentExamSummary";
 
 function App() {
   return (
@@ -162,6 +163,11 @@ function App() {
           }
         />
 
+        <Route
+          path="/teacher/submission/:submissionId"
+          element={<TeacherSubmissionView />}
+        />
+
         {/* ===============================
            STUDENT ROUTES
         ================================ */}
@@ -182,6 +188,12 @@ function App() {
             </ProtectedRoute>
           }
         />
+
+        <Route
+          path="/student/exam-summary/:examId"
+          element={<StudentExamSummary />}
+        />
+
 
         <Route
           path="/student/results"

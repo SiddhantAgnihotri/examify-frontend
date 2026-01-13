@@ -39,13 +39,17 @@ const StudentDashboard = () => {
     return "bg-red-100 text-red-700";
   };
 
-  const handleStartExam = async (examId) => {
-    try {
-      await API.get(`/student/start/${examId}`);
-      navigate(`/student/start/${examId}`);
-    } catch (err) {
-      alert(err.response?.data?.message || "Cannot start exam");
-    }
+  const buttonText = (status) => {
+    if (status === "Active") return "View & Start Exam";
+    if (status === "Upcoming") return "View Details";
+    return "View Summary";
+  };
+
+  /* ===============================
+     GO TO EXAM SUMMARY
+  ================================ */
+  const handleViewDetails = (examId) => {
+    navigate(`/student/exam-summary/${examId}`);
   };
 
   return (
@@ -53,49 +57,22 @@ const StudentDashboard = () => {
       <Navbar role="student" />
 
       <div className="max-w-7xl mx-auto p-6">
-
-        {/* ===============================
-           QUICK NAVIGATION (STUDENT)
-        ================================ */}
-        {/* <div className="flex flex-wrap gap-3 mb-6">
-          <button className="px-4 py-2 rounded-lg bg-blue-600 text-white">
-            My Exams
-          </button>
-
-          <button
-            onClick={() => navigate("/student/results")}
-            className="px-4 py-2 rounded-lg border hover:bg-gray-100"
-          >
-            My Results
-          </button>
-
-          <button
-            onClick={() => navigate("/student/profile")}
-            className="px-4 py-2 rounded-lg border hover:bg-gray-100"
-          >
-            Profile
-          </button>
-        </div> */}
-
-        {/* ===============================
-           HEADER
-        ================================ */}
+        {/* Header */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-800">
             Assigned Exams
           </h2>
           <p className="text-gray-600 mt-1">
-            Attempt your exams within the scheduled time
+            View exam details and attempt within the scheduled time
           </p>
         </div>
 
-        {/* ===============================
-           CONTENT
-        ================================ */}
+        {/* Loading */}
         {loading && (
           <p className="text-gray-500">Loading exams...</p>
         )}
 
+        {/* Empty State */}
         {!loading && exams.length === 0 && (
           <div className="bg-white p-10 rounded-xl shadow text-center">
             <p className="text-gray-600">
@@ -104,6 +81,7 @@ const StudentDashboard = () => {
           </div>
         )}
 
+        {/* Exams Grid */}
         {!loading && exams.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {exams.map((exam) => {
@@ -122,9 +100,21 @@ const StudentDashboard = () => {
                     {exam.subject} • {exam.duration} mins
                   </p>
 
+                  {exam.instituteName && (
+                    <p className="text-xs text-gray-500 mt-1">
+                      🏫 {exam.instituteName}
+                    </p>
+                  )}
+
                   <div className="text-sm text-gray-600 mt-3 space-y-1">
-                    <p><b>Start:</b> {new Date(exam.startTime).toLocaleString()}</p>
-                    <p><b>End:</b> {new Date(exam.endTime).toLocaleString()}</p>
+                    <p>
+                      <b>Start:</b>{" "}
+                      {new Date(exam.startTime).toLocaleString()}
+                    </p>
+                    <p>
+                      <b>End:</b>{" "}
+                      {new Date(exam.endTime).toLocaleString()}
+                    </p>
                   </div>
 
                   <span
@@ -136,16 +126,10 @@ const StudentDashboard = () => {
                   </span>
 
                   <button
-                    disabled={status !== "Active"}
-                    onClick={() => handleStartExam(exam._id)}
-                    className={`mt-5 w-full py-2.5 rounded-lg text-sm font-medium text-white
-                      ${
-                        status === "Active"
-                          ? "bg-blue-600 hover:bg-blue-700"
-                          : "bg-gray-400 cursor-not-allowed"
-                      }`}
+                    onClick={() => handleViewDetails(exam._id)}
+                    className="mt-5 w-full py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
                   >
-                    Start Exam
+                    {buttonText(status)}
                   </button>
                 </div>
               );

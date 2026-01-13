@@ -40,7 +40,7 @@ const MyResults = () => {
               My Results
             </h2>
             <p className="text-gray-600 mt-1">
-              View your exam performance and scores
+              View your exam performance and answers
             </p>
           </div>
 
@@ -66,7 +66,7 @@ const MyResults = () => {
           </div>
         )}
 
-        {/* ================= RESULTS GRID ================= */}
+        {/* ================= RESULTS ================= */}
         {!loading && results.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {results.map((r) => {
