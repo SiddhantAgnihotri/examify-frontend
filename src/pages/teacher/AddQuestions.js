@@ -10,10 +10,15 @@ const AddQuestions = () => {
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
 
+  const [type, setType] = useState("mcq");
+
   const [form, setForm] = useState({
     questionText: "",
     options: { A: "", B: "", C: "", D: "" },
     correctAnswer: "A",
+    expectedAnswer: "",
+    allowedFileTypes: "",
+    maxFileSizeMB: 10,
     marks: 1
   });
 
@@ -26,10 +31,15 @@ const AddQuestions = () => {
     fetchQuestions();
   }, []);
 
-  const handleOptionChange = (key, value) => {
+  const resetForm = () => {
     setForm({
-      ...form,
-      options: { ...form.options, [key]: value }
+      questionText: "",
+      options: { A: "", B: "", C: "", D: "" },
+      correctAnswer: "A",
+      expectedAnswer: "",
+      allowedFileTypes: "",
+      maxFileSizeMB: 10,
+      marks: 1
     });
   };
 
@@ -41,13 +51,43 @@ const AddQuestions = () => {
 
     try {
       setLoading(true);
-      await API.post(`/question/mcq/${examId}`, form);
-      setForm({
-        questionText: "",
-        options: { A: "", B: "", C: "", D: "" },
-        correctAnswer: "A",
-        marks: 1
-      });
+
+      if (type === "mcq") {
+        await API.post(`/question/mcq/${examId}`, {
+          questionText: form.questionText,
+          options: form.options,
+          correctAnswer: form.correctAnswer,
+          marks: form.marks
+        });
+      }
+
+      if (type === "short") {
+        await API.post(`/question/short/${examId}`, {
+          questionText: form.questionText,
+          expectedAnswer: form.expectedAnswer,
+          marks: form.marks
+        });
+      }
+
+      if (type === "long") {
+        await API.post(`/question/long/${examId}`, {
+          questionText: form.questionText,
+          marks: form.marks
+        });
+      }
+
+      if (type === "file") {
+        await API.post(`/question/file/${examId}`, {
+          questionText: form.questionText,
+          allowedFileTypes: form.allowedFileTypes
+            .split(",")
+            .map(f => f.trim()),
+          maxFileSizeMB: form.maxFileSizeMB,
+          marks: form.marks
+        });
+      }
+
+      resetForm();
       fetchQuestions();
     } catch {
       alert("Failed to add question");
@@ -62,54 +102,54 @@ const AddQuestions = () => {
     fetchQuestions();
   };
 
+  const badge = (type) => {
+    if (type === "mcq") return "bg-blue-100 text-blue-700";
+    if (type === "short") return "bg-purple-100 text-purple-700";
+    if (type === "long") return "bg-indigo-100 text-indigo-700";
+    return "bg-orange-100 text-orange-700";
+  };
+
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar role="teacher" />
 
       <div className="max-w-5xl mx-auto p-6">
-
-        {/* ================= BREADCRUMB + BACK ================= */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="text-sm text-gray-500">
-            <span
-              onClick={() => navigate("/teacher")}
-              className="cursor-pointer hover:text-blue-600"
-            >
-              Dashboard
-            </span>{" "}
-            /{" "}
-            <span
-              onClick={() => navigate("/teacher/my-exams")}
-              className="cursor-pointer hover:text-blue-600"
-            >
-              My Exams
-            </span>{" "}
-            / <span className="text-gray-700 font-medium">Add Questions</span>
+        {/* HEADER */}
+        <div className="mb-6 flex justify-between">
+          <div>
+            <h2 className="text-2xl font-bold text-gray-800">
+              Add Questions
+            </h2>
+            <p className="text-gray-600">
+              MCQ, Short, Long & File-based questions
+            </p>
           </div>
 
           <button
             onClick={() => navigate("/teacher/my-exams")}
-            className="px-4 py-1.5 text-sm rounded-lg border bg-white hover:bg-gray-50"
+            className="px-4 py-2 border rounded-lg hover:bg-gray-100"
           >
-            ← Back to My Exams
+            ← Back
           </button>
         </div>
 
-        {/* ================= HEADER ================= */}
-        <div className="mb-6">
-          <h2 className="text-2xl font-bold text-gray-800">
-            Add MCQ Questions
-          </h2>
-          <p className="text-gray-600 mt-1">
-            Add multiple-choice questions for this exam
-          </p>
-        </div>
-
-        {/* ================= ADD QUESTION ================= */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border mb-8">
+        {/* ADD QUESTION */}
+        <div className="bg-white p-6 rounded-xl shadow border mb-8">
           <h3 className="text-lg font-semibold mb-4">
             New Question
           </h3>
+
+          {/* QUESTION TYPE */}
+          <select
+            value={type}
+            onChange={(e) => setType(e.target.value)}
+            className="border rounded-lg px-3 py-2 mb-4"
+          >
+            <option value="mcq">MCQ</option>
+            <option value="short">Short Answer</option>
+            <option value="long">Long Answer</option>
+            <option value="file">File Upload</option>
+          </select>
 
           <textarea
             placeholder="Enter question text"
@@ -117,37 +157,98 @@ const AddQuestions = () => {
             onChange={(e) =>
               setForm({ ...form, questionText: e.target.value })
             }
-            className="w-full border rounded-lg p-3 mb-5"
+            className="w-full border rounded-lg p-3 mb-4"
           />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {["A", "B", "C", "D"].map((key) => (
-              <input
-                key={key}
-                placeholder={`Option ${key}`}
-                value={form.options[key]}
+          {/* MCQ */}
+          {type === "mcq" && (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {["A", "B", "C", "D"].map((k) => (
+                  <input
+                    key={k}
+                    placeholder={`Option ${k}`}
+                    value={form.options[k]}
+                    onChange={(e) =>
+                      setForm({
+                        ...form,
+                        options: {
+                          ...form.options,
+                          [k]: e.target.value
+                        }
+                      })
+                    }
+                    className="border rounded-lg px-3 py-2"
+                  />
+                ))}
+              </div>
+
+              <select
+                value={form.correctAnswer}
                 onChange={(e) =>
-                  handleOptionChange(key, e.target.value)
+                  setForm({
+                    ...form,
+                    correctAnswer: e.target.value
+                  })
                 }
-                className="border rounded-lg px-3 py-2"
-              />
-            ))}
-          </div>
+                className="border rounded-lg px-3 py-2 mt-4"
+              >
+                {["A", "B", "C", "D"].map(o => (
+                  <option key={o} value={o}>
+                    Correct: {o}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
 
-          <div className="flex flex-wrap items-center gap-4 mt-5">
-            <select
-              value={form.correctAnswer}
+          {/* SHORT */}
+          {type === "short" && (
+            <input
+              placeholder="Expected Answer (optional)"
+              value={form.expectedAnswer}
               onChange={(e) =>
-                setForm({ ...form, correctAnswer: e.target.value })
+                setForm({
+                  ...form,
+                  expectedAnswer: e.target.value
+                })
               }
-              className="border rounded-lg px-3 py-2"
-            >
-              <option value="A">Correct Answer: A</option>
-              <option value="B">Correct Answer: B</option>
-              <option value="C">Correct Answer: C</option>
-              <option value="D">Correct Answer: D</option>
-            </select>
+              className="border rounded-lg px-3 py-2 w-full mb-4"
+            />
+          )}
 
+          {/* FILE */}
+          {type === "file" && (
+            <>
+              <input
+                placeholder="Allowed file types (pdf,docx,zip)"
+                value={form.allowedFileTypes}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    allowedFileTypes: e.target.value
+                  })
+                }
+                className="border rounded-lg px-3 py-2 w-full mb-3"
+              />
+
+              <input
+                type="number"
+                value={form.maxFileSizeMB}
+                onChange={(e) =>
+                  setForm({
+                    ...form,
+                    maxFileSizeMB: Number(e.target.value)
+                  })
+                }
+                className="border rounded-lg px-3 py-2 w-40"
+                placeholder="Max MB"
+              />
+            </>
+          )}
+
+          {/* MARKS + ADD */}
+          <div className="flex gap-4 mt-4">
             <input
               type="number"
               min="1"
@@ -156,7 +257,6 @@ const AddQuestions = () => {
                 setForm({ ...form, marks: Number(e.target.value) })
               }
               className="border rounded-lg px-3 py-2 w-24"
-              placeholder="Marks"
             />
 
             <button
@@ -169,44 +269,42 @@ const AddQuestions = () => {
           </div>
         </div>
 
-        {/* ================= QUESTION LIST ================= */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border">
+        {/* QUESTION LIST */}
+        <div className="bg-white p-6 rounded-xl shadow border">
           <h3 className="text-lg font-semibold mb-4">
-            Questions Added ({questions.length})
+            Questions ({questions.length})
           </h3>
 
-          {questions.length === 0 && (
-            <p className="text-gray-500">No questions added yet.</p>
-          )}
+          {questions.map((q, i) => (
+            <div
+              key={q._id}
+              className="border rounded-lg p-4 mb-3"
+            >
+              <div className="flex justify-between">
+                <div>
+                  <p className="font-medium">
+                    {i + 1}. {q.questionText}
+                  </p>
 
-          <ol className="space-y-4">
-            {questions.map((q, index) => (
-              <li
-                key={q._id}
-                className="border rounded-lg p-4 hover:bg-gray-50"
-              >
-                <div className="flex justify-between gap-4">
-                  <div>
-                    <p className="font-medium">
-                      {index + 1}. {q.questionText}
-                    </p>
-                    <p className="text-sm text-gray-600 mt-1">
-                      Correct: {q.correctAnswer} • Marks: {q.marks}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => deleteQuestion(q._id)}
-                    className="text-red-600 text-sm hover:underline"
+                  <span
+                    className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${badge(
+                      q.type
+                    )}`}
                   >
-                    Delete
-                  </button>
+                    {q.type.toUpperCase()}
+                  </span>
                 </div>
-              </li>
-            ))}
-          </ol>
-        </div>
 
+                <button
+                  onClick={() => deleteQuestion(q._id)}
+                  className="text-red-600 text-sm hover:underline"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );

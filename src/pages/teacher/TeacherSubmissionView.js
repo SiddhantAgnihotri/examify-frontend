@@ -7,26 +7,30 @@ const TeacherSubmissionView = () => {
   const { submissionId } = useParams();
   const navigate = useNavigate();
 
-  const [submission, setSubmission] = useState(null);
-  const [questions, setQuestions] = useState([]);
+  const [data, setData] = useState(null);
+  const [marksMap, setMarksMap] = useState({});
+  const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchSubmission = async () => {
       try {
-        // Fetch submission
         const res = await API.get(
-          `/results/submission/${submissionId}`
+          `/results/submission/${submissionId}/details`
         );
 
-        setSubmission(res.data);
+        setData(res.data);
 
-        // Fetch exam questions
-        const qRes = await API.get(
-          `/question/${res.data.examId._id}`
-        );
-        setQuestions(qRes.data);
-      } catch (err) {
+        // Initialize marks ONLY for non-MCQ
+        const initial = {};
+        res.data.questions.forEach(q => {
+          if (q.type !== "mcq") {
+            initial[q._id] = q.obtainedMarks || 0;
+          }
+        });
+
+        setMarksMap(initial);
+      } catch {
         alert("Failed to load submission");
         navigate(-1);
       } finally {
@@ -36,6 +40,36 @@ const TeacherSubmissionView = () => {
 
     fetchSubmission();
   }, [submissionId, navigate]);
+
+  const handleMarksChange = (qid, value, max) => {
+    const v = Math.min(Math.max(Number(value), 0), max);
+    setMarksMap(prev => ({ ...prev, [qid]: v }));
+  };
+
+  const finalizeEvaluation = async () => {
+    if (!window.confirm("Finalize and lock this result?")) return;
+
+    try {
+      setSaving(true);
+
+      const payload = Object.keys(marksMap).map(qid => ({
+        questionId: qid,
+        obtainedMarks: marksMap[qid]
+      }));
+
+      await API.post(
+        `/results/submission/${submissionId}/evaluate`,
+        { answers: payload }
+      );
+
+      alert("Result finalized successfully");
+      navigate(-1);
+    } catch {
+      alert("Failed to save evaluation");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -48,127 +82,137 @@ const TeacherSubmissionView = () => {
     );
   }
 
-  if (!submission) return null;
+  if (!data) return null;
 
-  // Map answers for quick lookup
-  const answerMap = {};
-  submission.answers.forEach((a) => {
-    answerMap[a.questionId] = a.selectedOption;
-  });
+  const { student, exam, questions, obtainedMarks, totalMarks } = data;
+  const isManual = exam.evaluationType === "manual";
 
   return (
     <div className="min-h-screen bg-gray-100">
       <Navbar role="teacher" />
 
       <div className="max-w-6xl mx-auto p-6">
-        {/* ================= HEADER ================= */}
+        {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-gray-800">
-              Student Exam Attempt
+            <h2 className="text-2xl font-bold">
+              Student Submission
             </h2>
-            <p className="text-gray-600 mt-1">
-              {submission.examId.title}
+            <p className="text-gray-600">
+              {exam.title} • {student.name}
             </p>
           </div>
 
           <button
             onClick={() => navigate(-1)}
-            className="px-4 py-2 rounded-lg border hover:bg-gray-100"
+            className="px-4 py-2 border rounded-lg"
           >
             ← Back
           </button>
         </div>
 
-        {/* ================= STUDENT SUMMARY ================= */}
+        {/* SUMMARY */}
         <div className="bg-white rounded-xl border p-5 mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
           <div>
-            <p className="text-sm text-gray-500">Student Name</p>
-            <p className="font-semibold">
-              {submission.studentId.name}
-            </p>
+            <p className="text-sm text-gray-500">Student</p>
+            <p className="font-semibold">{student.name}</p>
           </div>
-
           <div>
-            <p className="text-sm text-gray-500">Student ID</p>
+            <p className="text-sm text-gray-500">User ID</p>
             <p className="font-semibold">
-              {submission.studentId.userId || "-"}
+              {student.userId || "-"}
             </p>
           </div>
-
           <div>
             <p className="text-sm text-gray-500">Score</p>
             <p className="font-bold text-lg">
-              {submission.obtainedMarks} /{" "}
-              {submission.totalMarks}
+              {obtainedMarks} / {totalMarks}
             </p>
           </div>
         </div>
 
-        {/* ================= QUESTIONS ================= */}
+        {/* QUESTIONS */}
         <div className="space-y-6">
-          {questions.map((q, index) => {
-            const studentAnswer = answerMap[q._id];
-            const isCorrect =
-              studentAnswer === q.correctAnswer;
+          {questions.map((q, index) => (
+            <div
+              key={q._id}
+              className="bg-white rounded-xl border p-6"
+            >
+              <p className="font-semibold mb-3">
+                {index + 1}. {q.questionText}
+              </p>
 
-            return (
-              <div
-                key={q._id}
-                className="bg-white rounded-xl border p-6"
-              >
-                <p className="font-semibold mb-4">
-                  {index + 1}. {q.questionText}
-                </p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {Object.entries(q.options).map(
-                    ([key, value]) => {
-                      const isSelected =
-                        studentAnswer === key;
-                      const isCorrectOpt =
-                        q.correctAnswer === key;
-
-                      return (
-                        <div
-                          key={key}
-                          className={`p-3 rounded-lg border
-                            ${
-                              isCorrectOpt
-                                ? "border-green-500 bg-green-50"
-                                : isSelected
-                                ? "border-red-500 bg-red-50"
-                                : ""
-                            }`}
-                        >
-                          <b>{key}.</b> {value}
-                        </div>
-                      );
-                    }
-                  )}
-                </div>
-
-                <div className="mt-4 flex justify-between items-center">
+              {/* MCQ (READ ONLY) */}
+              {q.type === "mcq" && (
+                <>
                   <p className="text-sm">
-                    Student Answer:{" "}
-                    <b>{studentAnswer || "Not Answered"}</b>
+                    Student Answer: <b>{q.studentAnswer || "Not Answered"}</b>
                   </p>
-
+                  <p className="text-sm mt-1">
+                    Correct Answer: <b>{q.correctAnswer}</b>
+                  </p>
                   <span
-                    className={`px-3 py-1 rounded-full text-sm font-semibold
+                    className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold
                       ${
-                        isCorrect
+                        q.studentAnswer === q.correctAnswer
                           ? "bg-green-100 text-green-700"
                           : "bg-red-100 text-red-700"
                       }`}
                   >
-                    {isCorrect ? "Correct" : "Wrong"}
+                    {q.studentAnswer === q.correctAnswer
+                      ? "Correct"
+                      : "Wrong"}
                   </span>
-                </div>
-              </div>
-            );
-          })}
+                </>
+              )}
+
+              {/* MANUAL QUESTIONS */}
+              {q.type !== "mcq" && (
+                <>
+                  <p className="text-sm mb-2">Student Answer:</p>
+                  <div className="p-3 bg-gray-50 rounded mb-3">
+                    {q.studentAnswer || "Not Answered"}
+                  </div>
+
+                  {isManual && (
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm">
+                        Marks (/{q.maxMarks})
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max={q.maxMarks}
+                        value={marksMap[q._id] ?? 0}
+                        onChange={e =>
+                          handleMarksChange(
+                            q._id,
+                            e.target.value,
+                            q.maxMarks
+                          )
+                        }
+                        className="border rounded px-3 py-1 w-24"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          ))}
         </div>
+
+        {/* FINALIZE */}
+        {isManual && (
+          <div className="flex justify-end mt-8">
+            <button
+              onClick={finalizeEvaluation}
+              disabled={saving}
+              className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-60"
+            >
+              {saving ? "Saving..." : "Save & Finalize Result"}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

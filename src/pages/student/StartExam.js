@@ -27,7 +27,10 @@ const StartExam = () => {
 
         const restored = {};
         res.data.previousAnswers.forEach(a => {
-          restored[a.questionId] = a.selectedOption;
+          restored[a.questionId] = {
+            type: "mcq",
+            value: a.selectedOption
+          };
         });
         setAnswers(restored);
 
@@ -67,12 +70,12 @@ const StartExam = () => {
   }, [timeLeft]);
 
   /* ===============================
-     HANDLERS
+     ANSWER HANDLER
   ================================ */
-  const handleOptionChange = (qId, option) => {
+  const updateAnswer = (qId, type, value) => {
     setAnswers(prev => ({
       ...prev,
-      [qId]: option
+      [qId]: { type, value }
     }));
   };
 
@@ -86,6 +89,10 @@ const StartExam = () => {
     }
   };
 
+  /* ===============================
+     SUBMIT EXAM
+     ❗ FILE answers skipped safely
+  ================================ */
   const handleSubmit = async (auto = false) => {
     if (submitting) return;
     if (!auto && !window.confirm("Submit exam now?")) return;
@@ -93,10 +100,12 @@ const StartExam = () => {
     try {
       setSubmitting(true);
 
-      const formattedAnswers = Object.keys(answers).map(qid => ({
-        questionId: qid,
-        selectedOption: answers[qid]
-      }));
+      const formattedAnswers = Object.keys(answers)
+        .filter(qid => answers[qid].type !== "file") // 🚫 skip file
+        .map(qid => ({
+          questionId: qid,
+          selectedOption: answers[qid].value
+        }));
 
       const res = await API.post(`/student/submit/${examId}`, {
         answers: formattedAnswers
@@ -125,16 +134,14 @@ const StartExam = () => {
     <div className="min-h-screen bg-gray-100">
       <Navbar role="student" />
 
-      {/* ===============================
-          EXAM HEADER (STICKY)
-      ================================ */}
+      {/* HEADER */}
       <div className="bg-white shadow sticky top-0 z-20">
         <div className="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
           <button
             onClick={handleBack}
             className="px-4 py-2 border rounded-lg hover:bg-gray-100"
           >
-            ← Back to Exams
+            ← Back
           </button>
 
           <p className="font-medium">
@@ -147,9 +154,7 @@ const StartExam = () => {
         </div>
       </div>
 
-      {/* ===============================
-          QUESTIONS
-      ================================ */}
+      {/* QUESTIONS */}
       <div className="max-w-5xl mx-auto p-6 space-y-6">
         {questions.map((q, index) => (
           <div key={q._id} className="bg-white p-6 rounded-xl shadow">
@@ -157,30 +162,69 @@ const StartExam = () => {
               {index + 1}. {q.questionText}
             </p>
 
-            {Object.entries(q.options).map(([key, value]) => (
-              <label
-                key={key}
-                className={`block p-3 border rounded-lg mb-2 cursor-pointer
-                  ${
-                    answers[q._id] === key
-                      ? "border-blue-600 bg-blue-50"
-                      : "hover:bg-gray-50"
-                  }`}
-              >
-                <input
-                  type="radio"
-                  name={q._id}
-                  checked={answers[q._id] === key}
-                  onChange={() => handleOptionChange(q._id, key)}
-                  className="mr-2"
-                />
-                <b>{key}.</b> {value}
-              </label>
-            ))}
+            {/* MCQ */}
+            {q.type === "mcq" &&
+              Object.entries(q.options).map(([key, value]) => (
+                <label
+                  key={key}
+                  className={`block p-3 border rounded-lg mb-2 cursor-pointer
+                    ${
+                      answers[q._id]?.value === key
+                        ? "border-blue-600 bg-blue-50"
+                        : "hover:bg-gray-50"
+                    }`}
+                >
+                  <input
+                    type="radio"
+                    name={q._id}
+                    checked={answers[q._id]?.value === key}
+                    onChange={() =>
+                      updateAnswer(q._id, "mcq", key)
+                    }
+                    className="mr-2"
+                  />
+                  <b>{key}.</b> {value}
+                </label>
+              ))}
+
+            {/* SHORT */}
+            {q.type === "short" && (
+              <input
+                type="text"
+                value={answers[q._id]?.value || ""}
+                onChange={(e) =>
+                  updateAnswer(q._id, "short", e.target.value)
+                }
+                className="w-full border rounded-lg px-4 py-2"
+                placeholder="Write your answer"
+              />
+            )}
+
+            {/* LONG */}
+            {q.type === "long" && (
+              <textarea
+                value={answers[q._id]?.value || ""}
+                onChange={(e) =>
+                  updateAnswer(q._id, "long", e.target.value)
+                }
+                className="w-full border rounded-lg px-4 py-2"
+                rows={5}
+                placeholder="Write detailed answer"
+              />
+            )}
+
+            {/* FILE (DISABLED FOR NOW) */}
+            {q.type === "file" && (
+              <div className="p-4 border rounded-lg bg-yellow-50 text-yellow-800">
+                📎 File upload questions are not enabled yet.
+                <br />
+                Please contact your teacher.
+              </div>
+            )}
           </div>
         ))}
 
-        {/* Submit */}
+        {/* SUBMIT */}
         <div className="flex justify-end">
           <button
             onClick={() => handleSubmit(false)}
