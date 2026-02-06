@@ -110,6 +110,19 @@ const MyExams = () => {
                           Questions
                         </button>
 
+                        <button
+                          onClick={() => navigate(`/teacher/assign-exam/${exam._id}`)}
+                          disabled={exam.status !== "published"}
+                          className={`px-3 py-1.5 text-sm rounded-lg text-white
+    ${exam.status === "published"
+                              ? "bg-indigo-600 hover:bg-indigo-700"
+                              : "bg-gray-400 cursor-not-allowed"
+                            }`}
+                        >
+                          Assign Students
+                        </button>
+
+
                         {exam.status === "published" && (
                           <button
                             onClick={() => navigate(`/teacher/results/${exam._id}`)}
