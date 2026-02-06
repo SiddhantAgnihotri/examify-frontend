@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import API from "../../api/axios";
 import Navbar from "../../components/Navbar";
@@ -26,7 +26,7 @@ const StartExam = () => {
         setQuestions(res.data.questions);
 
         const restored = {};
-        res.data.previousAnswers.forEach(a => {
+        res.data.previousAnswers.forEach((a) => {
           restored[a.questionId] = {
             type: "mcq",
             value: a.selectedOption
@@ -52,7 +52,44 @@ const StartExam = () => {
   }, [examId, navigate]);
 
   /* ===============================
-     TIMER
+     SUBMIT EXAM (FIXED)
+  ================================ */
+  const handleSubmit = useCallback(
+    async (auto = false) => {
+      if (submitting) return;
+      if (!auto && !window.confirm("Submit exam now?")) return;
+
+      try {
+        setSubmitting(true);
+
+        const formattedAnswers = Object.keys(answers)
+          .filter((qid) => answers[qid].type !== "file")
+          .map((qid) => ({
+            questionId: qid,
+            selectedOption: answers[qid].value
+          }));
+
+        const res = await API.post(`/student/submit/${examId}`, {
+          answers: formattedAnswers
+        });
+
+        alert(
+          auto
+            ? "Time up! Exam auto-submitted."
+            : `Exam submitted successfully!\nScore: ${res.data.obtainedMarks}/${res.data.totalMarks}`
+        );
+
+        navigate("/student/results");
+      } catch (err) {
+        alert(err.response?.data?.message || "Submission failed");
+        setSubmitting(false);
+      }
+    },
+    [answers, examId, navigate, submitting]
+  );
+
+  /* ===============================
+     TIMER (FIXED)
   ================================ */
   useEffect(() => {
     if (!examStarted.current || timeLeft === null) return;
@@ -63,17 +100,17 @@ const StartExam = () => {
     }
 
     timerRef.current = setInterval(() => {
-      setTimeLeft(prev => prev - 1);
+      setTimeLeft((prev) => prev - 1);
     }, 1000);
 
     return () => clearInterval(timerRef.current);
-  }, [timeLeft]);
+  }, [timeLeft, handleSubmit]);
 
   /* ===============================
      ANSWER HANDLER
   ================================ */
   const updateAnswer = (qId, type, value) => {
-    setAnswers(prev => ({
+    setAnswers((prev) => ({
       ...prev,
       [qId]: { type, value }
     }));
@@ -89,42 +126,7 @@ const StartExam = () => {
     }
   };
 
-  /* ===============================
-     SUBMIT EXAM
-     ❗ FILE answers skipped safely
-  ================================ */
-  const handleSubmit = async (auto = false) => {
-    if (submitting) return;
-    if (!auto && !window.confirm("Submit exam now?")) return;
-
-    try {
-      setSubmitting(true);
-
-      const formattedAnswers = Object.keys(answers)
-        .filter(qid => answers[qid].type !== "file") // 🚫 skip file
-        .map(qid => ({
-          questionId: qid,
-          selectedOption: answers[qid].value
-        }));
-
-      const res = await API.post(`/student/submit/${examId}`, {
-        answers: formattedAnswers
-      });
-
-      alert(
-        auto
-          ? "Time up! Exam auto-submitted."
-          : `Exam submitted successfully!\nScore: ${res.data.obtainedMarks}/${res.data.totalMarks}`
-      );
-
-      navigate("/student/results");
-    } catch (err) {
-      alert(err.response?.data?.message || "Submission failed");
-      setSubmitting(false);
-    }
-  };
-
-  const formatTime = sec => {
+  const formatTime = (sec) => {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     return `${m}:${s < 10 ? "0" : ""}${s}`;
@@ -213,7 +215,7 @@ const StartExam = () => {
               />
             )}
 
-            {/* FILE (DISABLED FOR NOW) */}
+            {/* FILE */}
             {q.type === "file" && (
               <div className="p-4 border rounded-lg bg-yellow-50 text-yellow-800">
                 📎 File upload questions are not enabled yet.
