@@ -39,17 +39,33 @@ const StudentDashboard = () => {
     return "bg-red-100 text-red-700";
   };
 
-  const buttonText = (status) => {
-    if (status === "Active") return "View & Start Exam";
+  /* ===============================
+     BUTTON TEXT
+  ================================ */
+  const getButtonText = (exam, status) => {
+    if (status === "Active") return "Start Exam";
     if (status === "Upcoming") return "View Details";
-    return "View Summary";
+
+    // Expired
+    if (exam.evaluationType === "manual") {
+      return "Result Pending";
+    }
+    return "View Result";
   };
 
   /* ===============================
-     GO TO EXAM SUMMARY
+     BUTTON ACTION
   ================================ */
-  const handleViewDetails = (examId) => {
-    navigate(`/student/exam-summary/${examId}`);
+  const handleAction = (exam, status) => {
+    if (status === "Active" || status === "Upcoming") {
+      navigate(`/student/exam-summary/${exam._id}`);
+      return;
+    }
+
+    // Expired
+    if (exam.evaluationType === "auto") {
+      navigate("/student/results");
+    }
   };
 
   return (
@@ -63,16 +79,14 @@ const StudentDashboard = () => {
             Assigned Exams
           </h2>
           <p className="text-gray-600 mt-1">
-            View exam details and attempt within the scheduled time
+            View and attempt exams within the scheduled time
           </p>
         </div>
 
-        {/* Loading */}
         {loading && (
           <p className="text-gray-500">Loading exams...</p>
         )}
 
-        {/* Empty State */}
         {!loading && exams.length === 0 && (
           <div className="bg-white p-10 rounded-xl shadow text-center">
             <p className="text-gray-600">
@@ -81,7 +95,6 @@ const StudentDashboard = () => {
           </div>
         )}
 
-        {/* Exams Grid */}
         {!loading && exams.length > 0 && (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {exams.map((exam) => {
@@ -100,11 +113,14 @@ const StudentDashboard = () => {
                     {exam.subject} • {exam.duration} mins
                   </p>
 
-                  {exam.instituteName && (
-                    <p className="text-xs text-gray-500 mt-1">
-                      🏫 {exam.instituteName}
-                    </p>
-                  )}
+                  <p className="text-xs mt-1 text-gray-500">
+                    📝 Evaluation:{" "}
+                    <b>
+                      {exam.evaluationType === "manual"
+                        ? "Teacher Checked"
+                        : "Auto (MCQ)"}
+                    </b>
+                  </p>
 
                   <div className="text-sm text-gray-600 mt-3 space-y-1">
                     <p>
@@ -126,10 +142,20 @@ const StudentDashboard = () => {
                   </span>
 
                   <button
-                    onClick={() => handleViewDetails(exam._id)}
-                    className="mt-5 w-full py-2.5 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                    onClick={() => handleAction(exam, status)}
+                    disabled={
+                      status === "Expired" &&
+                      exam.evaluationType === "manual"
+                    }
+                    className={`mt-5 w-full py-2.5 rounded-lg text-sm font-medium text-white
+                      ${
+                        status === "Expired" &&
+                        exam.evaluationType === "manual"
+                          ? "bg-gray-400 cursor-not-allowed"
+                          : "bg-blue-600 hover:bg-blue-700"
+                      }`}
                   >
-                    {buttonText(status)}
+                    {getButtonText(exam, status)}
                   </button>
                 </div>
               );
