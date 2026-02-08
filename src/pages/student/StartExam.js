@@ -170,10 +170,9 @@ const StartExam = () => {
                 <label
                   key={key}
                   className={`block p-3 border rounded-lg mb-2 cursor-pointer
-                    ${
-                      answers[q._id]?.value === key
-                        ? "border-blue-600 bg-blue-50"
-                        : "hover:bg-gray-50"
+                    ${answers[q._id]?.value === key
+                      ? "border-blue-600 bg-blue-50"
+                      : "hover:bg-gray-50"
                     }`}
                 >
                   <input
@@ -217,12 +216,31 @@ const StartExam = () => {
 
             {/* FILE */}
             {q.type === "file" && (
-              <div className="p-4 border rounded-lg bg-yellow-50 text-yellow-800">
-                📎 File upload questions are not enabled yet.
-                <br />
-                Please contact your teacher.
-              </div>
+              <input
+                type="file"
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+
+                  const formData = new FormData();
+                  formData.append("file", file);
+
+                  try {
+                    await API.post(
+                      `/student/upload/${examId}/${q._id}`,
+                      formData,
+                      { headers: { "Content-Type": "multipart/form-data" } }
+                    );
+
+                    alert("File uploaded successfully");
+                  } catch {
+                    alert("File upload failed");
+                  }
+                }}
+                className="border rounded-lg p-2"
+              />
             )}
+
           </div>
         ))}
 

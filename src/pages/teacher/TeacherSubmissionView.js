@@ -146,7 +146,8 @@ const TeacherSubmissionView = () => {
               {q.type === "mcq" && (
                 <>
                   <p className="text-sm">
-                    Student Answer: <b>{q.studentAnswer || "Not Answered"}</b>
+                    Student Answer:{" "}
+                    <b>{q.studentAnswer || "Not Answered"}</b>
                   </p>
                   <p className="text-sm mt-1">
                     Correct Answer: <b>{q.correctAnswer}</b>
@@ -166,13 +167,57 @@ const TeacherSubmissionView = () => {
                 </>
               )}
 
-              {/* MANUAL QUESTIONS */}
-              {q.type !== "mcq" && (
+              {/* SHORT / LONG */}
+              {(q.type === "short" || q.type === "long") && (
                 <>
                   <p className="text-sm mb-2">Student Answer:</p>
-                  <div className="p-3 bg-gray-50 rounded mb-3">
+                  <div className="p-3 bg-gray-50 rounded mb-3 whitespace-pre-wrap">
                     {q.studentAnswer || "Not Answered"}
                   </div>
+
+                  {isManual && (
+                    <div className="flex items-center gap-3">
+                      <label className="text-sm">
+                        Marks (/{q.maxMarks})
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        max={q.maxMarks}
+                        value={marksMap[q._id] ?? 0}
+                        onChange={e =>
+                          handleMarksChange(
+                            q._id,
+                            e.target.value,
+                            q.maxMarks
+                          )
+                        }
+                        className="border rounded px-3 py-1 w-24"
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* FILE UPLOAD */}
+              {q.type === "file" && (
+                <>
+                  <p className="text-sm mb-2">Student File:</p>
+
+                  {q.studentAnswer ? (
+                    <a
+                      href={`/${q.studentAnswer}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-block mb-3 text-blue-600 underline"
+                    >
+                      📥 Download Uploaded File
+                    </a>
+                  ) : (
+                    <p className="text-gray-500 mb-3">
+                      No file uploaded
+                    </p>
+                  )}
 
                   {isManual && (
                     <div className="flex items-center gap-3">

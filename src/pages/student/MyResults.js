@@ -5,19 +5,14 @@ import Navbar from "../../components/Navbar";
 
 const MyResults = () => {
   const [results, setResults] = useState([]);
-  const [pending, setPending] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
   useEffect(() => {
     const fetchResults = async () => {
       try {
-        const checkedRes = await API.get("/results/my-results");
-        setResults(checkedRes.data);
-
-        // 🔥 fetch pending submissions manually
-        const pendingRes = await API.get("/student/pending-results");
-        setPending(pendingRes.data);
+        const res = await API.get("/results/my-results");
+        setResults(res.data);
       } catch {
         alert("Failed to load results");
       } finally {
@@ -28,9 +23,15 @@ const MyResults = () => {
     fetchResults();
   }, []);
 
-  const getStatus = (obtained, total) => {
+  const getPassFail = (obtained, total) => {
     const percent = (obtained / total) * 100;
     return percent >= 40 ? "Pass" : "Fail";
+  };
+
+  const statusBadge = (status) => {
+    if (status === "checked")
+      return "bg-green-100 text-green-700";
+    return "bg-yellow-100 text-yellow-700";
   };
 
   return (
@@ -45,7 +46,7 @@ const MyResults = () => {
               My Results
             </h2>
             <p className="text-gray-600 mt-1">
-              Exam scores & evaluation status
+              View your exam results and evaluation status
             </p>
           </div>
 
@@ -57,113 +58,109 @@ const MyResults = () => {
           </button>
         </div>
 
+        {/* LOADING */}
         {loading && (
           <p className="text-gray-500">Loading results...</p>
         )}
 
-        {/* ================= CHECKED RESULTS ================= */}
-        {!loading && results.length > 0 && (
-          <>
-            <h3 className="text-lg font-semibold mb-4">
-              ✅ Evaluated Exams
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-              {results.map((r) => {
-                const percent = Math.round(
-                  (r.obtainedMarks / r.totalMarks) * 100
-                );
-                const status = getStatus(
-                  r.obtainedMarks,
-                  r.totalMarks
-                );
-
-                return (
-                  <div
-                    key={r._id}
-                    className="bg-white rounded-xl shadow-sm border p-6"
-                  >
-                    <h3 className="text-lg font-semibold">
-                      {r.examId.title}
-                    </h3>
-
-                    <p className="text-sm text-gray-500 mb-4">
-                      {r.examId.subject}
-                    </p>
-
-                    <div className="flex justify-between items-center mb-3">
-                      <p className="text-xl font-bold">
-                        {r.obtainedMarks} / {r.totalMarks}
-                      </p>
-
-                      <span
-                        className={`px-3 py-1 rounded-full text-sm font-semibold
-                          ${
-                            status === "Pass"
-                              ? "bg-green-100 text-green-700"
-                              : "bg-red-100 text-red-700"
-                          }`}
-                      >
-                        {status}
-                      </span>
-                    </div>
-
-                    <div className="w-full bg-gray-200 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full ${
-                          status === "Pass"
-                            ? "bg-green-600"
-                            : "bg-red-600"
-                        }`}
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-
-                    <p className="text-right text-sm mt-2">
-                      {percent}%
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </>
-        )}
-
-        {/* ================= PENDING RESULTS ================= */}
-        {!loading && pending.length > 0 && (
-          <>
-            <h3 className="text-lg font-semibold mb-4">
-              ⏳ Pending Evaluation
-            </h3>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {pending.map((p) => (
-                <div
-                  key={p._id}
-                  className="bg-white border rounded-xl p-6"
-                >
-                  <h3 className="font-semibold text-lg">
-                    {p.examId.title}
-                  </h3>
-
-                  <p className="text-sm text-gray-500 mb-3">
-                    {p.examId.subject}
-                  </p>
-
-                  <span className="inline-block px-3 py-1 rounded-full bg-yellow-100 text-yellow-700 text-sm font-semibold">
-                    Awaiting Teacher Evaluation
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        )}
-
-        {!loading && results.length === 0 && pending.length === 0 && (
+        {/* EMPTY */}
+        {!loading && results.length === 0 && (
           <div className="bg-white p-10 rounded-xl shadow text-center">
             <p className="text-gray-600">
               You haven’t completed any exams yet.
             </p>
+          </div>
+        )}
+
+        {/* RESULTS */}
+        {!loading && results.length > 0 && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {results.map((r) => {
+              const isChecked = r.status === "checked";
+              const percent = isChecked
+                ? Math.round((r.obtainedMarks / r.totalMarks) * 100)
+                : 0;
+
+              return (
+                <div
+                  key={r._id}
+                  className="bg-white rounded-xl border p-6 shadow hover:shadow-lg transition"
+                >
+                  {/* TITLE */}
+                  <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                    {r.examId.title}
+                  </h3>
+
+                  <p className="text-sm text-gray-500 mb-3">
+                    {r.examId.subject} •{" "}
+                    {new Date(r.createdAt).toLocaleDateString()}
+                  </p>
+
+                  {/* STATUS BADGE */}
+                  <span
+                    className={`inline-block mb-4 px-3 py-1 rounded-full text-xs font-semibold ${statusBadge(
+                      r.status
+                    )}`}
+                  >
+                    {r.status === "checked"
+                      ? "Checked"
+                      : "Pending Evaluation"}
+                  </span>
+
+                  {/* SCORE */}
+                  {isChecked ? (
+                    <>
+                      <div className="flex justify-between items-center mb-3">
+                        <div>
+                          <p className="text-sm text-gray-500">
+                            Score
+                          </p>
+                          <p className="text-xl font-bold">
+                            {r.obtainedMarks} / {r.totalMarks}
+                          </p>
+                        </div>
+
+                        <span
+                          className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                            getPassFail(
+                              r.obtainedMarks,
+                              r.totalMarks
+                            ) === "Pass"
+                              ? "bg-green-100 text-green-700"
+                              : "bg-red-100 text-red-700"
+                          }`}
+                        >
+                          {getPassFail(
+                            r.obtainedMarks,
+                            r.totalMarks
+                          )}
+                        </span>
+                      </div>
+
+                      {/* PROGRESS BAR */}
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div
+                          className={`h-2 rounded-full ${
+                            percent >= 40
+                              ? "bg-green-600"
+                              : "bg-red-600"
+                          }`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+
+                      <p className="text-right text-sm mt-2 text-gray-600">
+                        {percent}%
+                      </p>
+                    </>
+                  ) : (
+                    <div className="mt-4 text-sm text-yellow-700 bg-yellow-50 p-3 rounded-lg">
+                      ⏳ Result will be visible after teacher evaluation
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
