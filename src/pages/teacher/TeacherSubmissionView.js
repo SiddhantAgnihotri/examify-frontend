@@ -21,7 +21,7 @@ const TeacherSubmissionView = () => {
 
         setData(res.data);
 
-        // Initialize marks ONLY for non-MCQ
+        // ✅ Initialize marks for ALL non-MCQ (short, long, file)
         const initial = {};
         res.data.questions.forEach(q => {
           if (q.type !== "mcq") {
@@ -95,9 +95,7 @@ const TeacherSubmissionView = () => {
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
           <div>
-            <h2 className="text-2xl font-bold">
-              Student Submission
-            </h2>
+            <h2 className="text-2xl font-bold">Student Submission</h2>
             <p className="text-gray-600">
               {exam.title} • {student.name}
             </p>
@@ -119,9 +117,7 @@ const TeacherSubmissionView = () => {
           </div>
           <div>
             <p className="text-sm text-gray-500">User ID</p>
-            <p className="font-semibold">
-              {student.userId || "-"}
-            </p>
+            <p className="font-semibold">{student.userId || "-"}</p>
           </div>
           <div>
             <p className="text-sm text-gray-500">Score</p>
@@ -134,15 +130,12 @@ const TeacherSubmissionView = () => {
         {/* QUESTIONS */}
         <div className="space-y-6">
           {questions.map((q, index) => (
-            <div
-              key={q._id}
-              className="bg-white rounded-xl border p-6"
-            >
+            <div key={q._id} className="bg-white rounded-xl border p-6">
               <p className="font-semibold mb-3">
                 {index + 1}. {q.questionText}
               </p>
 
-              {/* MCQ (READ ONLY) */}
+              {/* MCQ */}
               {q.type === "mcq" && (
                 <>
                   <p className="text-sm">
@@ -153,12 +146,11 @@ const TeacherSubmissionView = () => {
                     Correct Answer: <b>{q.correctAnswer}</b>
                   </p>
                   <span
-                    className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold
-                      ${
-                        q.studentAnswer === q.correctAnswer
-                          ? "bg-green-100 text-green-700"
-                          : "bg-red-100 text-red-700"
-                      }`}
+                    className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold ${
+                      q.studentAnswer === q.correctAnswer
+                        ? "bg-green-100 text-green-700"
+                        : "bg-red-100 text-red-700"
+                    }`}
                   >
                     {q.studentAnswer === q.correctAnswer
                       ? "Correct"
@@ -202,16 +194,16 @@ const TeacherSubmissionView = () => {
               {/* FILE UPLOAD */}
               {q.type === "file" && (
                 <>
-                  <p className="text-sm mb-2">Student File:</p>
+                  <p className="text-sm mb-2">Uploaded File:</p>
 
-                  {q.studentAnswer ? (
+                  {q.fileUrl ? (
                     <a
-                      href={`/${q.studentAnswer}`}
+                      href={`${process.env.REACT_APP_API_URL}/${q.fileUrl}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="inline-block mb-3 text-blue-600 underline"
+                      className="inline-block mb-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
                     >
-                      📥 Download Uploaded File
+                      📎 View / Download File
                     </a>
                   ) : (
                     <p className="text-gray-500 mb-3">
