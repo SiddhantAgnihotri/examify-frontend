@@ -21,16 +21,16 @@ const TeacherSubmissionView = () => {
 
         setData(res.data);
 
-        // ✅ Initialize marks for ALL non-MCQ (short, long, file)
+        // ✅ initialize marks for all NON-MCQ questions
         const initial = {};
         res.data.questions.forEach(q => {
           if (q.type !== "mcq") {
             initial[q._id] = q.obtainedMarks || 0;
           }
         });
-
         setMarksMap(initial);
-      } catch {
+      } catch (err) {
+        console.error(err);
         alert("Failed to load submission");
         navigate(-1);
       } finally {
@@ -64,7 +64,8 @@ const TeacherSubmissionView = () => {
 
       alert("Result finalized successfully");
       navigate(-1);
-    } catch {
+    } catch (err) {
+      console.error(err);
       alert("Failed to save evaluation");
     } finally {
       setSaving(false);
@@ -86,6 +87,7 @@ const TeacherSubmissionView = () => {
 
   const { student, exam, questions, obtainedMarks, totalMarks } = data;
   const isManual = exam.evaluationType === "manual";
+  const API_BASE = process.env.REACT_APP_API_URL;
 
   return (
     <div className="min-h-screen bg-gray-100">
@@ -129,113 +131,123 @@ const TeacherSubmissionView = () => {
 
         {/* QUESTIONS */}
         <div className="space-y-6">
-          {questions.map((q, index) => (
-            <div key={q._id} className="bg-white rounded-xl border p-6">
-              <p className="font-semibold mb-3">
-                {index + 1}. {q.questionText}
-              </p>
+          {questions.map((q, index) => {
+            // normalize file path safely
+            const fileLink =
+              q.fileUrl &&
+              `${API_BASE}/${q.fileUrl.replace(/^\/+/, "")}`;
 
-              {/* MCQ */}
-              {q.type === "mcq" && (
-                <>
-                  <p className="text-sm">
-                    Student Answer:{" "}
-                    <b>{q.studentAnswer || "Not Answered"}</b>
-                  </p>
-                  <p className="text-sm mt-1">
-                    Correct Answer: <b>{q.correctAnswer}</b>
-                  </p>
-                  <span
-                    className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold ${
-                      q.studentAnswer === q.correctAnswer
-                        ? "bg-green-100 text-green-700"
-                        : "bg-red-100 text-red-700"
-                    }`}
-                  >
-                    {q.studentAnswer === q.correctAnswer
-                      ? "Correct"
-                      : "Wrong"}
-                  </span>
-                </>
-              )}
+            return (
+              <div
+                key={q._id}
+                className="bg-white rounded-xl border p-6"
+              >
+                <p className="font-semibold mb-3">
+                  {index + 1}. {q.questionText}
+                </p>
 
-              {/* SHORT / LONG */}
-              {(q.type === "short" || q.type === "long") && (
-                <>
-                  <p className="text-sm mb-2">Student Answer:</p>
-                  <div className="p-3 bg-gray-50 rounded mb-3 whitespace-pre-wrap">
-                    {q.studentAnswer || "Not Answered"}
-                  </div>
-
-                  {isManual && (
-                    <div className="flex items-center gap-3">
-                      <label className="text-sm">
-                        Marks (/{q.maxMarks})
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max={q.maxMarks}
-                        value={marksMap[q._id] ?? 0}
-                        onChange={e =>
-                          handleMarksChange(
-                            q._id,
-                            e.target.value,
-                            q.maxMarks
-                          )
-                        }
-                        className="border rounded px-3 py-1 w-24"
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-
-              {/* FILE UPLOAD */}
-              {q.type === "file" && (
-                <>
-                  <p className="text-sm mb-2">Uploaded File:</p>
-
-                  {q.fileUrl ? (
-                    <a
-                      href={`${process.env.REACT_APP_API_URL}/${q.fileUrl}`}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-block mb-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                    >
-                      📎 View / Download File
-                    </a>
-                  ) : (
-                    <p className="text-gray-500 mb-3">
-                      No file uploaded
+                {/* MCQ */}
+                {q.type === "mcq" && (
+                  <>
+                    <p className="text-sm">
+                      Student Answer:{" "}
+                      <b>{q.studentAnswer || "Not Answered"}</b>
                     </p>
-                  )}
+                    <p className="text-sm mt-1">
+                      Correct Answer: <b>{q.correctAnswer}</b>
+                    </p>
+                    <span
+                      className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold ${
+                        q.studentAnswer === q.correctAnswer
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {q.studentAnswer === q.correctAnswer
+                        ? "Correct"
+                        : "Wrong"}
+                    </span>
+                  </>
+                )}
 
-                  {isManual && (
-                    <div className="flex items-center gap-3">
-                      <label className="text-sm">
-                        Marks (/{q.maxMarks})
-                      </label>
-                      <input
-                        type="number"
-                        min="0"
-                        max={q.maxMarks}
-                        value={marksMap[q._id] ?? 0}
-                        onChange={e =>
-                          handleMarksChange(
-                            q._id,
-                            e.target.value,
-                            q.maxMarks
-                          )
-                        }
-                        className="border rounded px-3 py-1 w-24"
-                      />
+                {/* SHORT / LONG */}
+                {(q.type === "short" || q.type === "long") && (
+                  <>
+                    <p className="text-sm mb-2">Student Answer:</p>
+                    <div className="p-3 bg-gray-50 rounded mb-3 whitespace-pre-wrap">
+                      {q.studentAnswer || "Not Answered"}
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          ))}
+
+                    {isManual && (
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm">
+                          Marks (/{q.maxMarks})
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max={q.maxMarks}
+                          value={marksMap[q._id] ?? 0}
+                          onChange={e =>
+                            handleMarksChange(
+                              q._id,
+                              e.target.value,
+                              q.maxMarks
+                            )
+                          }
+                          className="border rounded px-3 py-1 w-24"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {/* FILE QUESTION */}
+                {q.type === "file" && (
+                  <>
+                    <p className="text-sm mb-2">Uploaded File:</p>
+
+                    {fileLink ? (
+                      <a
+                        href={fileLink}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-block mb-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                      >
+                        📎 View / Download File
+                      </a>
+                    ) : (
+                      <p className="text-gray-500 mb-3">
+                        No file uploaded
+                      </p>
+                    )}
+
+                    {isManual && (
+                      <div className="flex items-center gap-3">
+                        <label className="text-sm">
+                          Marks (/{q.maxMarks})
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          max={q.maxMarks}
+                          value={marksMap[q._id] ?? 0}
+                          onChange={e =>
+                            handleMarksChange(
+                              q._id,
+                              e.target.value,
+                              q.maxMarks
+                            )
+                          }
+                          className="border rounded px-3 py-1 w-24"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* FINALIZE */}
